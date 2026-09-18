@@ -69,12 +69,20 @@ describe("chat.send (native POST /v1/chat)", () => {
     expect(JSON.parse(calls[0]!.init.body as string).assistant_id).toBe(assistantId);
   });
 
-  it("throws before any request when no assistantId is available", async () => {
-    const { fetch, calls } = makeFetchMock([]);
+  // This used to throw before sending anything. It cannot any more: the API
+  // key carries a scope, and a key bound to the knowledge base *requires* the
+  // field to be absent — refusing to send the request made that key unusable
+  // from the SDK entirely.
+  it("sends the request with no assistant_id when nobody names one", async () => {
+    const { fetch, calls } = makeFetchMock([mockResponse({ body: { text: "Hi" } })]);
     const ragen = new Ragen({ apiKey: "sk_test", fetch });
 
-    await expect(ragen.chat.send({ content: "Hi" })).rejects.toThrow(/assistantId/);
-    expect(calls).toHaveLength(0);
+    await ragen.chat.send({ content: "Hi" });
+
+    expect(calls).toHaveLength(1);
+    const body = JSON.parse(calls[0]!.init.body as string) as Record<string, unknown>;
+    expect("assistant_id" in body).toBe(false);
+    expect(body).toEqual({ content: "Hi", stream: false });
   });
 });
 

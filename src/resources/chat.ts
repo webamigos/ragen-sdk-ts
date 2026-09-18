@@ -1,4 +1,3 @@
-import { RagenError } from "../errors";
 import { parseSSEStream } from "../streaming";
 import type {
   ChatCompletion,
@@ -38,15 +37,13 @@ function buildBody(
   extras: Record<string, unknown> = {},
 ): Record<string, unknown> {
   const assistantId = params.assistantId ?? defaultAssistantId;
-  if (!assistantId) {
-    throw new RagenError("assistantId is required (pass per-call or set on the client)", {
-      status: 0,
-      type: "invalid_request_error",
-      param: "assistantId",
-    });
-  }
   const body: Record<string, unknown> = {
-    assistant_id: assistantId,
+    // Only when the caller has one. The API key carries a scope of its own:
+    // a key bound to an assistant answers for it unasked, and a key scoped to
+    // the knowledge base refuses a request that names any assistant at all.
+    // Sending the field unconditionally — and refusing to send the request
+    // without it, as this used to — makes every knowledge-base key a 403.
+    ...(assistantId ? { assistant_id: assistantId } : {}),
     messages: params.messages,
     ...extras,
   };
@@ -205,14 +202,9 @@ export class Chat {
     stream: boolean,
   ): Record<string, unknown> {
     const assistantId = params.assistantId ?? this.config.defaultAssistantId;
-    if (!assistantId) {
-      throw new RagenError(
-        "assistantId is required (pass per-call or set on the client)",
-        { status: 0, type: "invalid_request_error", param: "assistantId" },
-      );
-    }
     const body: Record<string, unknown> = {
-      assistant_id: assistantId,
+      // Optional — see `buildBody`.
+      ...(assistantId ? { assistant_id: assistantId } : {}),
       content: params.content,
       stream,
     };
