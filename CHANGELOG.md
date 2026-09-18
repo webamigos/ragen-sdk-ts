@@ -5,6 +5,31 @@ All notable changes to `@webamigos/ragen-sdk-ts` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] — 2026-09-18
+
+### Changed
+
+- **`assistantId` is optional, and the SDK no longer refuses to send a request
+  without one.** It used to throw `RagenError` before any HTTP call when
+  neither a per-call `assistantId` nor a client default was set, and to send
+  `assistant_id` on every request when one was.
+
+  Both are now wrong. The Ragen API gives an API key a scope of its own: a key
+  created for one assistant answers for it unasked, and a key scoped to the
+  whole knowledge base — the default for a new key — **rejects a request that
+  names any assistant** with `403`. So the old behaviour made a knowledge-base
+  key unusable from this SDK in both directions: it would not send the request
+  without the field, and the field it insisted on was the thing being refused.
+
+  `assistant_id` now goes on the wire only when a caller supplies one. Set it
+  when a key legitimately reaches several assistants; otherwise leave it out
+  and let the key decide.
+
+  Nothing that works today breaks: a call that passed an `assistantId` still
+  sends it. Only code that *relied on the throw* — catching a missing
+  `assistantId` locally rather than letting the API answer — changes, and it
+  now gets a real response instead of a synthetic error.
+
 ## [0.2.2] — 2026-09-06
 
 ### Changed

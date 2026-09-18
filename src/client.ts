@@ -12,7 +12,14 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 export interface RagenClientOptions {
   /** API key. Required. Read from `RAGEN_API_KEY` if omitted (Node only). */
   apiKey?: string;
-  /** Default `assistant_id` to use when one is not passed per-call. */
+  /**
+   * Default `assistant_id` for calls that do not carry one.
+   *
+   * Usually unnecessary: an API key created for a single assistant already
+   * answers for it, and a key scoped to the knowledge base refuses any
+   * assistant at all. Set this only when one key legitimately reaches several
+   * assistants and you want a default among them.
+   */
   assistantId?: string;
   /** Override the API base URL (e.g. for self-hosted deployments). */
   baseURL?: string;

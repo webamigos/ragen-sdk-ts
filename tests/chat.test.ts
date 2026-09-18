@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { Ragen, RagenAuthError, RagenError, RagenRateLimitError } from "../src";
+import { Ragen, RagenAuthError, RagenRateLimitError } from "../src";
 import { makeFetchMock, mockResponse } from "./helpers";
 
 const completion = {
@@ -64,14 +64,36 @@ describe("chat.completions.create", () => {
     expect(body.assistant_id).toBe("33333333-3333-4333-8333-333333333333");
   });
 
-  it("throws if no assistantId provided", async () => {
-    const { fetch } = makeFetchMock([]);
-    const ragen = new Ragen({ apiKey: "sk_test", fetch });
-    await expect(
-      ragen.chat.completions.create({
-        messages: [{ role: "user", content: "hi" }],
+  // The whole point of the change: a body an OpenAI-compatible caller can
+  // produce, and the only body a knowledge-base key accepts. This used to
+  // throw before the request left the process.
+  it("omits assistant_id when nobody names one", async () => {
+    const { fetch, calls } = makeFetchMock([
+      mockResponse({
+        body: {
+          id: "chatcmpl-1",
+          object: "chat.completion",
+          created: 0,
+          model: "ragen",
+          choices: [
+            {
+              index: 0,
+              message: { role: "assistant", content: "hi" },
+              finish_reason: "stop",
+            },
+          ],
+        },
       }),
-    ).rejects.toBeInstanceOf(RagenError);
+    ]);
+    const ragen = new Ragen({ apiKey: "sk_test", fetch });
+
+    await ragen.chat.completions.create({
+      messages: [{ role: "user", content: "hi" }],
+    });
+
+    const body = JSON.parse(calls[0]!.init.body as string) as Record<string, unknown>;
+    expect("assistant_id" in body).toBe(false);
+    expect(body.messages).toEqual([{ role: "user", content: "hi" }]);
   });
 
   it("throws RagenAuthError on 401", async () => {

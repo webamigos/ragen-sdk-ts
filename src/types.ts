@@ -71,7 +71,13 @@ export interface ChatCompletionStreamOptions {
 export type ReasoningEffort = "low" | "medium" | "high";
 
 export interface ChatCompletionCreateParamsBase {
-  /** Required if no default `assistantId` is set on the client. */
+  /**
+   * Optional. The API key carries a scope of its own: a key created for one
+   * assistant answers for it whether or not you send this, and a key scoped
+   * to the knowledge base rejects a request that names any assistant with
+   * `403`. Set it only when the key is not already bound to the assistant you
+   * want — and only to one the key may reach.
+   */
   assistantId?: string;
   messages: ChatCompletionMessageParam[];
   model?: string;
@@ -231,7 +237,13 @@ export interface APIErrorBody {
  * deltas separated from the answer.
  */
 export interface ChatSendParams {
-  /** Required if no default `assistantId` is set on the client. */
+  /**
+   * Optional. The API key carries a scope of its own: a key created for one
+   * assistant answers for it whether or not you send this, and a key scoped
+   * to the knowledge base rejects a request that names any assistant with
+   * `403`. Set it only when the key is not already bound to the assistant you
+   * want — and only to one the key may reach.
+   */
   assistantId?: string;
   /** The user's message. 1–10,000 characters. */
   content: string;

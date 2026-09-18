@@ -70,7 +70,27 @@ const text = await ragen.chat.completions.streamToString({
 });
 ```
 
-If you set `assistantId` on the client, you can omit it per call:
+### The key usually knows which assistant
+
+`assistantId` is optional, and most of the time you should leave it out. An API
+key carries a scope chosen when it was created:
+
+- a key created for **one assistant** answers for that assistant whether or not
+  you send `assistantId`, and rejects any other with `403`;
+- a key scoped to **the whole knowledge base** answers from the documents that
+  belong to no assistant, and rejects a request naming any assistant at all.
+
+```ts
+const ragen = new Ragen({ apiKey: process.env.RAGEN_API_KEY });
+
+// The key decides. This is the normal case.
+await ragen.chat.completions.create({
+  messages: [{ role: "user", content: "Hi" }],
+});
+```
+
+Set it — per call, or as a client default — only when one key legitimately
+reaches several assistants and you want to pick among them:
 
 ```ts
 const ragen = new Ragen({
@@ -219,14 +239,14 @@ The SDK automatically retries on **429** and **5xx** responses with exponential 
 
 ## Configuration
 
-| Option        | Type           | Default                     | Description                                                    |
-| ------------- | -------------- | --------------------------- | -------------------------------------------------------------- |
-| `apiKey`      | `string`       | `process.env.RAGEN_API_KEY` | API key. Required.                                             |
-| `assistantId` | `string`       | —                           | Default `assistant_id` to use when one is not passed per-call. |
-| `baseURL`     | `string`       | `https://api.ragen.ai/v1`   | API base URL. Override for self-hosted deployments.            |
-| `maxRetries`  | `number`       | `2`                         | Retry attempts on 429/5xx and transient errors.                |
-| `timeout`     | `number` (ms)  | `30000`                     | Per-request timeout.                                           |
-| `fetch`       | `typeof fetch` | `globalThis.fetch`          | Custom `fetch` implementation (e.g. for testing or polyfills). |
+| Option        | Type           | Default                     | Description                                                                                                        |
+| ------------- | -------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `apiKey`      | `string`       | `process.env.RAGEN_API_KEY` | API key. Required.                                                                                                 |
+| `assistantId` | `string`       | —                           | Default `assistant_id` for calls that do not carry one. Usually unnecessary — the API key already carries a scope. |
+| `baseURL`     | `string`       | `https://api.ragen.ai/v1`   | API base URL. Override for self-hosted deployments.                                                                |
+| `maxRetries`  | `number`       | `2`                         | Retry attempts on 429/5xx and transient errors.                                                                    |
+| `timeout`     | `number` (ms)  | `30000`                     | Per-request timeout.                                                                                               |
+| `fetch`       | `typeof fetch` | `globalThis.fetch`          | Custom `fetch` implementation (e.g. for testing or polyfills).                                                     |
 
 ## Examples
 
