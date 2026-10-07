@@ -159,3 +159,73 @@ describe("chat.sendStream", () => {
     expect(out).not.toContain("THINKING");
   });
 });
+
+describe("sources (opt-in)", () => {
+  const sources = [
+    { fileId: "f1", fileName: "returns.pdf", rank: 1 },
+    {
+      fileId: "f2",
+      fileName: "Returns",
+      rank: 2,
+      brain: { pageTitle: "Returns", sources: [{ fileName: "returns.pdf", span: "§2" }] },
+    },
+  ];
+
+  it("sends sources: true and returns the list from send()", async () => {
+    const { fetch, calls } = makeFetchMock([
+      mockResponse({ body: { text: "ok", sources } }),
+    ]);
+    const ragen = new Ragen({ apiKey: "sk_test", fetch });
+
+    const out = await ragen.chat.send({ assistantId, content: "Hi", sources: true });
+
+    expect(JSON.parse(calls[0]!.init.body as string).sources).toBe(true);
+    expect(out.sources).toEqual(sources);
+  });
+
+  it("sends nothing about sources unless asked", async () => {
+    const { fetch, calls } = makeFetchMock([
+      mockResponse({ body: { text: "ok" } }),
+      mockResponse({ body: { text: "ok" } }),
+    ]);
+    const ragen = new Ragen({ apiKey: "sk_test", fetch });
+
+    await ragen.chat.send({ assistantId, content: "Hi" });
+    await ragen.chat.send({ assistantId, content: "Hi", sources: false });
+
+    for (const call of calls) {
+      expect("sources" in JSON.parse(call.init.body as string)).toBe(false);
+    }
+  });
+
+  it("yields a sources event from sendStream() and keeps it out of sendToString()", async () => {
+    const stream = () =>
+      sseStream([
+        'data: {"text":"30 days."}',
+        `data: ${JSON.stringify({ sources })}`,
+        "data: [DONE]",
+      ]);
+    const { fetch } = makeFetchMock([
+      mockResponse({ raw: stream() }),
+      mockResponse({ raw: stream() }),
+    ]);
+    const ragen = new Ragen({ apiKey: "sk_test", fetch });
+
+    const events = [];
+    for await (const event of ragen.chat.sendStream({
+      assistantId,
+      content: "Hi",
+      sources: true,
+    })) {
+      events.push(event);
+    }
+    expect(events).toEqual([
+      { type: "text", text: "30 days." },
+      { type: "sources", sources },
+    ]);
+
+    expect(
+      await ragen.chat.sendToString({ assistantId, content: "Hi", sources: true }),
+    ).toBe("30 days.");
+  });
+});

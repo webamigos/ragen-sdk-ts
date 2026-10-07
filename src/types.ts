@@ -35,6 +35,28 @@ export interface ChatCompletionChoice {
   logprobs: unknown | null;
 }
 
+/**
+ * A document an answer was drawn from, as the API returns it when asked
+ * (`sources` on `chat.send*`, `ragen_sources` on `chat.completions.*`).
+ */
+export interface ChatSource {
+  fileId: string;
+  /** `null` for documents ingested before file names were stored. */
+  fileName: string | null;
+  /** `1` is the most relevant. */
+  rank: number;
+  /**
+   * Present when the file is a published Ragen Brain page: its title and the
+   * documents it was built from that the API key may open. A key that can
+   * read the page but not all of its documents gets a shorter list, never the
+   * names of documents it cannot open.
+   */
+  brain?: {
+    pageTitle: string;
+    sources: { fileName: string; span: string }[];
+  };
+}
+
 export interface ChatCompletion {
   id: string;
   object: "chat.completion";
@@ -42,6 +64,8 @@ export interface ChatCompletion {
   model: string;
   choices: ChatCompletionChoice[];
   usage: ChatCompletionUsage;
+  /** Only when the request set `ragen_sources: true`. */
+  ragen_sources?: ChatSource[];
 }
 
 export interface ChatCompletionChunkDelta {
@@ -62,6 +86,11 @@ export interface ChatCompletionChunk {
   model: string;
   choices: ChatCompletionChunkChoice[];
   usage?: ChatCompletionUsage;
+  /**
+   * Only when the request set `ragen_sources: true`: one trailing chunk with
+   * `choices: []`, after the usage chunk and before the stream ends.
+   */
+  ragen_sources?: ChatSource[];
 }
 
 export interface ChatCompletionStreamOptions {
@@ -90,6 +119,12 @@ export interface ChatCompletionCreateParamsBase {
    * those default to `"medium"` server-side when this is omitted.
    */
   reasoning_effort?: ReasoningEffort;
+  /**
+   * Ask for the documents the answer was drawn from. The response then
+   * carries `ragen_sources` (a trailing `choices: []` chunk when streaming).
+   * Off by default; a Ragen extension, so it is namespaced.
+   */
+  ragen_sources?: boolean;
 }
 
 export interface ChatCompletionCreateParamsNonStreaming extends ChatCompletionCreateParamsBase {
@@ -102,8 +137,7 @@ export interface ChatCompletionCreateParamsStreaming extends ChatCompletionCreat
 }
 
 export type ChatCompletionCreateParams =
-  | ChatCompletionCreateParamsNonStreaming
-  | ChatCompletionCreateParamsStreaming;
+  ChatCompletionCreateParamsNonStreaming | ChatCompletionCreateParamsStreaming;
 
 export interface ChatCompletionStreamParams extends ChatCompletionCreateParamsBase {
   stream_options?: ChatCompletionStreamOptions;
@@ -254,10 +288,17 @@ export interface ChatSendParams {
    */
   context?: string;
   reasoning_effort?: ReasoningEffort;
+  /**
+   * Ask for the documents the answer was drawn from. `send` then returns
+   * `sources`; `sendStream` yields one `sources` event before it ends.
+   */
+  sources?: boolean;
 }
 
 export interface ChatSendResponse {
   text: string;
+  /** Only when the request set `sources: true`. */
+  sources?: ChatSource[];
 }
 
 /**
@@ -267,7 +308,9 @@ export interface ChatSendResponse {
  */
 export type ChatStreamEvent =
   | { type: "text"; text: string }
-  | { type: "reasoning"; reasoning: string };
+  | { type: "reasoning"; reasoning: string }
+  /** One event near the end, only when the request set `sources: true`. */
+  | { type: "sources"; sources: ChatSource[] };
 
 // --- Threads ---------------------------------------------------------------
 

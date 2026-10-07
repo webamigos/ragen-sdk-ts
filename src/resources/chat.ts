@@ -8,6 +8,7 @@ import type {
   ChatCompletionStreamParams,
   ChatSendParams,
   ChatSendResponse,
+  ChatSource,
   ChatStreamEvent,
 } from "../types";
 import { performRequest, readJson, type FetchClientConfig } from "../utils";
@@ -23,6 +24,7 @@ export type {
   ChatCompletionStreamParams,
   ChatSendParams,
   ChatSendResponse,
+  ChatSource,
   ChatStreamEvent,
 } from "../types";
 
@@ -62,6 +64,11 @@ function buildBody(
   if (params.reasoning_effort !== undefined) {
     body.reasoning_effort = params.reasoning_effort;
   }
+  // Only when asked: the endpoint whitelists its body, and `false` is the
+  // default, so there is nothing to say.
+  if (params.ragen_sources === true) {
+    body.ragen_sources = true;
+  }
   return body;
 }
 
@@ -73,12 +80,16 @@ function buildBody(
 function toStreamEvent(raw: {
   text?: unknown;
   reasoning?: unknown;
+  sources?: unknown;
 }): ChatStreamEvent | null {
   if (typeof raw.text === "string") {
     return { type: "text", text: raw.text };
   }
   if (typeof raw.reasoning === "string") {
     return { type: "reasoning", reasoning: raw.reasoning };
+  }
+  if (Array.isArray(raw.sources)) {
+    return { type: "sources", sources: raw.sources as ChatSource[] };
   }
   return null;
 }
@@ -214,6 +225,9 @@ export class Chat {
     if (params.reasoning_effort !== undefined) {
       body.reasoning_effort = params.reasoning_effort;
     }
+    if (params.sources === true) {
+      body.sources = true;
+    }
     return body;
   }
 
@@ -260,7 +274,7 @@ export class Chat {
     options?: { signal?: AbortSignal },
   ): AsyncIterable<ChatStreamEvent> {
     const open = async (): Promise<
-      AsyncIterable<{ text?: unknown; reasoning?: unknown }>
+      AsyncIterable<{ text?: unknown; reasoning?: unknown; sources?: unknown }>
     > => {
       const response = await performRequest(this.config.http, {
         method: "POST",
@@ -269,7 +283,11 @@ export class Chat {
         raw: true,
         signal: options?.signal,
       });
-      return parseSSEStream<{ text?: unknown; reasoning?: unknown }>(response);
+      return parseSSEStream<{
+        text?: unknown;
+        reasoning?: unknown;
+        sources?: unknown;
+      }>(response);
     };
 
     async function* generate(): AsyncGenerator<ChatStreamEvent, void, void> {
