@@ -19,6 +19,7 @@ export type {
   ChatCompletionStreamParams,
   ChatSendParams,
   ChatSendResponse,
+  ChatSource,
   ChatStreamEvent,
 } from "./resources/chat";
 

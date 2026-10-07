@@ -5,6 +5,23 @@ All notable changes to `@webamigos/ragen-sdk-ts` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Sources.** Ask the API for the documents an answer was drawn from.
+  `chat.send({ sources: true })` returns `sources`; `chat.sendStream({ sources: true })`
+  yields one `{ type: "sources" }` event near the end; and
+  `chat.completions.create({ ragen_sources: true })` returns `ragen_sources`
+  (a trailing `choices: []` chunk when streaming). Each `ChatSource` has `fileId`,
+  `fileName`, `rank`, and for a published Ragen Brain page a `brain` object with
+  the page's title and the documents behind it that your key may open.
+
+  Off by default and not sent unless set, so nothing changes for existing code.
+  `sendToString` and `streamToString` ignore the extra event. The API side needs
+  a Ragen version that ships `sources` / `ragen_sources`; an older server rejects
+  the field with `400`.
+
 ## [0.3.0] — 2026-09-18
 
 ### Changed

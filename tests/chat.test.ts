@@ -225,3 +225,38 @@ describe("chat.completions params newly accepted by the API", () => {
     expect(body).not.toHaveProperty("max_completion_tokens");
   });
 });
+
+describe("chat.completions ragen_sources (opt-in)", () => {
+  const sources = [{ fileId: "f1", fileName: "returns.pdf", rank: 1 }];
+
+  it("sends ragen_sources: true and returns the list", async () => {
+    const { fetch, calls } = makeFetchMock([
+      mockResponse({ body: { ...completion, ragen_sources: sources } }),
+    ]);
+    const ragen = new Ragen({ apiKey: "sk_test", fetch });
+
+    const result = await ragen.chat.completions.create({
+      messages: [{ role: "user", content: "hello" }],
+      ragen_sources: true,
+    });
+
+    expect(JSON.parse(calls[0]!.init.body as string)).toEqual({
+      messages: [{ role: "user", content: "hello" }],
+      stream: false,
+      ragen_sources: true,
+    });
+    expect(result.ragen_sources).toEqual(sources);
+  });
+
+  it("says nothing about sources unless asked", async () => {
+    const { fetch, calls } = makeFetchMock([mockResponse({ body: completion })]);
+    const ragen = new Ragen({ apiKey: "sk_test", fetch });
+
+    await ragen.chat.completions.create({
+      messages: [{ role: "user", content: "hello" }],
+      ragen_sources: false,
+    });
+
+    expect("ragen_sources" in JSON.parse(calls[0]!.init.body as string)).toBe(false);
+  });
+});
