@@ -87,16 +87,16 @@ describe("assistants.list pagination", () => {
     await ragen.assistants.list({
       limit: 100,
       order: "asc",
-      after: "asst-a",
-      before: "asst-z",
+      after: "11111111-1111-4111-8111-111111111111",
+      before: "22222222-2222-4222-8222-222222222222",
     });
 
     const url = new URL(calls[0]!.url);
     expect(url.pathname).toBe("/v1/assistants");
     expect(url.searchParams.get("limit")).toBe("100");
     expect(url.searchParams.get("order")).toBe("asc");
-    expect(url.searchParams.get("after")).toBe("asst-a");
-    expect(url.searchParams.get("before")).toBe("asst-z");
+    expect(url.searchParams.get("after")).toBe("11111111-1111-4111-8111-111111111111");
+    expect(url.searchParams.get("before")).toBe("22222222-2222-4222-8222-222222222222");
   });
 
   it("sends no query string when called with no params", async () => {

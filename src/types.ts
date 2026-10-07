@@ -326,7 +326,7 @@ export interface Thread {
   metadata: Record<string, never>;
   /** Ragen extension — the title shown in the dashboard sidebar. */
   title: string | null;
-  /** Ragen extension — `asst-<projectId>` the thread is bound to. */
+  /** Ragen extension — the assistant (project) id the thread is bound to. The API used to return it as `asst-<projectId>`; it is now the bare id, and the prefixed form is still accepted on input. */
   assistant_id: string | null;
 }
 

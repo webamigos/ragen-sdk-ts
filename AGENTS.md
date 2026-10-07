@@ -156,7 +156,7 @@ SemVer. See [`.claude/skills/ragen-sdk-release/SKILL.md`](.claude/skills/ragen-s
 - **Don't switch to `axios`** or another HTTP client. Platform `fetch` is what keeps the SDK runtime-agnostic and zero-dependency.
 - **Don't add runtime `dependencies`** casually. Zero is a feature; a new one needs a clear justification.
 - **Don't commit to `dist/`** — built in CI, gitignored locally.
-- **Don't use `asst_`-prefixed UUID samples.** Ragen assistant IDs are `asst-<uuid>` or bare UUIDs; use `11111111-1111-4111-8111-111111111111` in docs and examples.
+- **Don't use `asst_`-prefixed UUID samples.** Ragen assistant IDs are bare UUIDs (the API no longer returns the legacy `asst-<uuid>` form, but still accepts it on input); use `11111111-1111-4111-8111-111111111111` in docs and examples.
 - **Don't assume an error body has `error.message`.** Only the endpoints running `OpenAiExceptionFilter` do.
 
 ## Post-Task Workflow

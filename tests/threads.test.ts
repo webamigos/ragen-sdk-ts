@@ -11,7 +11,7 @@ function thread(id: string) {
     tool_resources: {},
     metadata: {},
     title: "Support chat",
-    assistant_id: "asst-abc",
+    assistant_id: "11111111-1111-4111-8111-111111111111",
   };
 }
 
@@ -27,7 +27,7 @@ describe("threads.list", () => {
     expect(calls[0]!.url).toBe("https://api.ragen.ai/v1/threads");
     expect(calls[0]!.init.method).toBe("GET");
     expect(out.data[0]!.title).toBe("Support chat");
-    expect(out.data[0]!.assistant_id).toBe("asst-abc");
+    expect(out.data[0]!.assistant_id).toBe("11111111-1111-4111-8111-111111111111");
   });
 
   it("passes limit, order and after as query params", async () => {
