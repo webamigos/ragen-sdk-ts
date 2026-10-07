@@ -1,6 +1,6 @@
 {
   "name": "@webamigos/ragen-sdk-ts",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "TypeScript SDK for Ragen.ai — EU-native RAG platform",
   "license": "Apache-2.0",
   "author": "Ragen.ai <support@ragen.ai>",
