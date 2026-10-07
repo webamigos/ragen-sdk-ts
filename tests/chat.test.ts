@@ -240,7 +240,11 @@ describe("chat.completions ragen_sources (opt-in)", () => {
       ragen_sources: true,
     });
 
-    expect(JSON.parse(calls[0]!.init.body as string).ragen_sources).toBe(true);
+    expect(JSON.parse(calls[0]!.init.body as string)).toEqual({
+      messages: [{ role: "user", content: "hello" }],
+      stream: false,
+      ragen_sources: true,
+    });
     expect(result.ragen_sources).toEqual(sources);
   });
 
